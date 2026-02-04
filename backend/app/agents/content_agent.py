@@ -7,12 +7,12 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 class ContentAgent:
     def generate_article(
-        self,
-        topic: str,
-        primary_keywords: list[str],
-        internal_links: list[dict],
-        external_links: list[dict],
-        target_word_count: int = 900,
+      self,
+      topic: str,
+      primary_keywords: list[str],
+      internal_links: list[dict] | None = None,
+      external_links: list[dict] | None = None,
+      target_word_count: int = 900,
     ) -> dict:
 
         prompt_template = """You are an expert SEO content writer. Write a comprehensive, detailed article with real content.
@@ -23,6 +23,10 @@ Primary keywords to use: {primary_keywords}
 
 Target word count: {word_count}
 
+Here are some external links extracted from search results that you can take help from (prefer these when providing the "externalReferences" field):
+{external_links_block}
+
+Similarly give internal linking suggestions based on the topic and keywords
 IMPORTANT: Write ACTUAL, DETAILED content. Do NOT use placeholder text like "Your paragraph here" or "Content here". Every paragraph must be 100+ words of real information.
 
 Requirements:
@@ -31,7 +35,7 @@ Requirements:
 - SEO metadata (title tag, meta description)
 - Keyword analysis (primary + secondary)
 - Internal linking suggestions (3-5)
-- External references (2-4 authoritative sources with context)
+- External references (2-4 authoritative sources with context) — prefer the provided external links above
 - Structured data (JSON-LD, schema.org Article)
 - Real, detailed paragraphs (100+ words each)
 - Actionable insights and examples
@@ -138,10 +142,15 @@ Return ONLY valid JSON in this EXACT format (no markdown, no code blocks):
   }}
 }}"""
 
+        external_links_block = json.dumps(external_links or [], ensure_ascii=False, indent=2)
+        internal_links_block = json.dumps(internal_links or [], ensure_ascii=False, indent=2)
+
         prompt = prompt_template.format(
-            topic=topic,
-            primary_keywords=", ".join(primary_keywords),
-            word_count=target_word_count,
+          topic=topic,
+          primary_keywords=", ".join(primary_keywords),
+          word_count=target_word_count,
+          external_links_block=external_links_block,
+          internal_links_block=internal_links_block,
         )
 
         print(f"\n📝 [CONTENT AGENT] Generating article for: {topic}")
@@ -168,7 +177,9 @@ Return ONLY valid JSON in this EXACT format (no markdown, no code blocks):
             
             # Parse JSON
             article = json.loads(raw_response)
-            article["externalReferences"] = external_links
+            # Force the externalReferences/internalLinks to use the SERP-extracted links we passed in
+            article["externalReferences"] = external_links or []
+            # article["internalLinks"] = internal_links or []
             print(f"✅ [CONTENT AGENT] Successfully parsed JSON")
             print(f"✅ [CONTENT AGENT] Article title: {article.get('title')}")
             print(f"✅ [CONTENT AGENT] Content blocks: {len(article.get('content', []))}")
