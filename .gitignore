@@ -9,3 +9,4 @@ __pycache__/
 *.env
 venv/  
 rough* 
+.DS_Store

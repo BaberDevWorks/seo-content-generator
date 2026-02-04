@@ -168,6 +168,7 @@ Return ONLY valid JSON in this EXACT format (no markdown, no code blocks):
             
             # Parse JSON
             article = json.loads(raw_response)
+            article["externalReferences"] = external_links
             print(f"✅ [CONTENT AGENT] Successfully parsed JSON")
             print(f"✅ [CONTENT AGENT] Article title: {article.get('title')}")
             print(f"✅ [CONTENT AGENT] Content blocks: {len(article.get('content', []))}")

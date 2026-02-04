@@ -207,7 +207,7 @@ st.markdown("""
 st.markdown("""
 <div class="header-container">
     <div class="header-title">🧠 SEO Content Generator</div>
-    <div class="header-subtitle">Create SEO-optimized articles with metadata, keywords, and strategic linking</div>
+    <div class="header-subtitle">Create SEO-optimized articles with metadata, keywords and strategic linking</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -387,6 +387,7 @@ if "job_id" in st.session_state:
                     st.markdown("**External References:**")
                     for ref in result.get("externalReferences", []):
                         url = ref.get('url', '#')
+                        print(f"🔵 [FRONTEND] external ref {url}")
                         context = ref.get('context', 'Reference')
                         domain = url.split('/')[2] if len(url.split('/')) > 2 else url
                         st.markdown(f"- [{domain}]({url})")

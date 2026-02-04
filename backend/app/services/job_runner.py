@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from app.models.job import JobStatus
 from app.services.serp_provider import MockSerpProvider
 from app.agents.serp_agent import SerpAnalysisAgent
@@ -15,21 +16,19 @@ def run_full_generation(job):
         job.updated_at = datetime.utcnow()
 
         print(f"📊 [JOB RUNNER] Fetching SERP results...")
-        # SERP
         serp_results = MockSerpProvider().fetch(job.topic)
         print(f"📊 [JOB RUNNER] Got {len(serp_results)} SERP results")
-        
+        print(f"📊 [JOB RUNNER] Sample SERP result: {json.dumps(serp_results[0].dict(), ensure_ascii=False)}")
+
         topics = SerpAnalysisAgent().extract_topics(serp_results)
         print(f"📊 [JOB RUNNER] Extracted topics: {topics}")
 
-        # External links from SERP
         external_links = [
             {"url": r.url, "context": f"Reference from SERP result #{r.rank}"}
-            for r in serp_results[:3]
+            for r in serp_results[:5]
         ]
-        print(f"📊 [JOB RUNNER] External links: {len(external_links)}")
+        print(f"📊 [JOB RUNNER] External links (top 5): {json.dumps([e['url'] for e in external_links], ensure_ascii=False)}")
 
-        # Internal links (mocked)
         internal_links = [
             {"anchorText": "Remote team management best practices", "targetPage": "/remote-team-management"},
             {"anchorText": "Top collaboration tools", "targetPage": "/collaboration-tools"},
@@ -49,6 +48,9 @@ def run_full_generation(job):
             target_word_count=job.target_word_count,
         )
         print(f"✍️ [JOB RUNNER] Content generation completed")
+        if isinstance(article, dict):
+            article["externalReferences"] = external_links
+            print(f"📎 [JOB RUNNER] Overrode article externalReferences with SERP links: {json.dumps([e['url'] for e in external_links], ensure_ascii=False)}")
 
         job.status = JobStatus.completed
         job.current_step = "Article generation completed"
